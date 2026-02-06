@@ -1,10 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { TeamService } from "./team.service";
-import type { Team } from "./team.type";
-
 
 const TeamList = () => {
-  const { data: teams = [], isPending, isError } = useQuery({
+  const { data: _, isPending, isError } = useQuery({
     queryKey: ['teams'],
     queryFn: TeamService.list,
   })
@@ -18,7 +16,8 @@ const TeamList = () => {
   }
 
   return (
-    <div>
+    <div className="grid grid-cols-2 gap-6">
+      
       <h1>Elenco Squadre</h1>
       </div>
   );

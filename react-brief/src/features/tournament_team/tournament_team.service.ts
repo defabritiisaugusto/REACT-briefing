@@ -1,12 +1,17 @@
 import type { TournamentTeam } from "./tournament_team.type";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { myFetch } from "@/lib/backend";
+import myEnv from "@/lib/env";
 
 export class TournamentTeamService {
-  async list(): Promise<TournamentTeam[]> {
-    const res = await fetch(`${API_URL}/tournamentteams`);
-    if (!res.ok) throw new Error("Errore nel recupero dei tournament team");
-    return res.json();
+  static async list(): Promise<TournamentTeam[]> {
+    return myFetch<TournamentTeam[]>(`${myEnv.backendApiUrl}/tournament-teams`);
   }
-  // Altri metodi CRUD se necessario
-};
+
+ 
+static async get(id: number): Promise<TournamentTeam> {
+  const tournamentTeam = await myFetch<TournamentTeam>(`${myEnv.backendApiUrl}/tournament-teams/${id}`)
+  return ser
+}
+
+
+}

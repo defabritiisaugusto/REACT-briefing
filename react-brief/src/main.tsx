@@ -1,3 +1,12 @@
+// main.tsx è il punto di ingresso dell'applicazione React, dove viene configurato il router con le diverse pagine e viene inizializzato il client di React Query.
+// Utilizza React Router per definire le rotte dell'applicazione, con un layout principale (MainLayout) che include un header e un'area per il contenuto dinamico (Outlet).
+// Inoltre, integra TanStack Devtools per il debugging di React Query, posizionandolo sul lato sinistro dello schermo.
+// Le rotte principali includono la HomePage, la lista dei tornei, la gestione dei tornei, la creazione di nuovi tornei, il tabellone del torneo e la lista delle squadre.
+// Importazione delle dipendenze necessarie per l'applicazione, tra cui React, React Router, React Query e i componenti delle pagine e del layout.
+
+
+
+
 import { TanStackDevtools } from '@tanstack/react-devtools';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
@@ -8,8 +17,6 @@ import "./index.css";
 import MainLayout from "./layouts/MainLayout";
 import HomePage from "./pages/HomePage";
 import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools'
-import TournamentList from './features/tournament/TournamentList';
-import TeamList from './features/team/TeamList';
 
 const router = createBrowserRouter([
   {
@@ -20,17 +27,8 @@ const router = createBrowserRouter([
         index: true,
         element: <HomePage />, 
       },
-      {
-        path: '/tournaments',
-        element: <TournamentList />,
-      },
-      {
-        path: '/teams',
-        element: <TeamList />,
-      },
     ],
   },
- 
 ]);
 
 const queryClient = new QueryClient()
