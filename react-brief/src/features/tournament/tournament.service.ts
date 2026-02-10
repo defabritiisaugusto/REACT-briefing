@@ -31,6 +31,7 @@ export class TournamentService {
   // Creazione torneo: accettiamo almeno il nome, e opzionalmente anche la data.
   // Il backend richiede che il campo "status" NON sia nullo, quindi impostiamo
   // esplicitamente lo stato iniziale a "pending".
+  
   static async create({ name, date }: { name: string; date?: string }): Promise<Tournament> {
     const newTournament = await myFetch<Tournament>(`${myEnv.backendApiUrl}/tournaments`, {
       method: 'POST',
