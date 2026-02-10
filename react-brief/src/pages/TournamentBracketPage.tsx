@@ -95,8 +95,10 @@ const TournamentBracketPage = () => {
     mutationFn: (winnerTeamId: number) =>
       TournamentService.completeTournament(tournamentId, winnerTeamId),
     onSuccess: () => {
-      // Ricarichiamo la lista tornei in cache (pagina Tornei / Storico)
+      // Ricarichiamo la lista tornei in cache (pagina Tornei)
       queryClient.invalidateQueries({ queryKey: ["tournaments"] });
+      // e anche lo storico tornei che usa la chiave ["tournaments", "completed"]
+      queryClient.invalidateQueries({ queryKey: ["tournaments", "completed"] });
     },
   });
 
