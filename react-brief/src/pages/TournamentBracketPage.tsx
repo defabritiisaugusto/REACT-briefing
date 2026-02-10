@@ -335,7 +335,7 @@ const TournamentBracketPage = () => {
           <section>
             <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start justify-between">
               {/* Quarti di finale */}
-              <div className="flex-1 min-w-[220px]">
+              <div className="flex-1 min-w-55">
                 <h3 className="font-semibold text-base mb-3 text-center">Quarti di finale</h3>
                 <div className="space-y-3">
                   {quarterMatches.map((match, index) => (
@@ -381,7 +381,7 @@ const TournamentBracketPage = () => {
               </div>
 
               {/* Semifinali */}
-              <div className="flex-1 min-w-[220px]">
+              <div className="flex-1 min-w-55">
                 <h3 className="font-semibold text-base mb-3 text-center">Semifinali</h3>
                 <div className="space-y-3">
                   {semiMatches.map((match, index) => (
@@ -433,7 +433,7 @@ const TournamentBracketPage = () => {
               </div>
 
               {/* Finale */}
-              <div className="flex-1 min-w-[220px]">
+              <div className="flex-1 min-w-55">
                 <h3 className="font-semibold text-base mb-3 text-center">Finale</h3>
                 <div className="border rounded-lg p-3 bg-card shadow-sm flex flex-col gap-2">
                   <p className="text-xs font-medium text-gray-600 mb-1">Finale</p>
