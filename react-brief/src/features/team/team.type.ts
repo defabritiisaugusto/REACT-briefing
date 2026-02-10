@@ -5,7 +5,7 @@
 export type Team = {
 	id: number;
 	name: string;
-	img: string;
+	img?: string;
 }
 
 

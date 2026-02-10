@@ -16,6 +16,11 @@ import { RouterProvider } from "react-router/dom";
 import "./index.css";
 import MainLayout from "./layouts/MainLayout";
 import HomePage from "./pages/HomePage";
+import TournamentListPage from "./pages/TournamentListPage";
+import TeamListPage from "./pages/TeamListPage";
+import TournamentCreatePage from "./pages/TournamentCreatePage";
+import TournamentBracketPage from "./pages/TournamentBracketPage";
+import TournamentHistoryPage from "./pages/TournamentHistoryPage";
 import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools'
 
 const router = createBrowserRouter([
@@ -26,6 +31,26 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <HomePage />, 
+      },
+      {
+        path: "tournaments",
+        element: <TournamentListPage />,
+      },
+      {
+        path: "tournaments/history",
+        element: <TournamentHistoryPage />,
+      },
+      {
+        path: "tournaments/:id",
+        element: <TournamentBracketPage />,
+      },
+      {
+        path: "tournaments/manage",
+        element: <TournamentCreatePage />,
+      },
+      {
+        path: "teams",
+        element: <TeamListPage />,
       },
     ],
   },

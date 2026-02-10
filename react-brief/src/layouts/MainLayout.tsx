@@ -16,6 +16,7 @@ const MainLayout = () => {
             <Link to="/" className="hover:underline">Home</Link>
             <Link to="/tournaments/manage" className="hover:underline">Organizza</Link>
             <Link to="/tournaments" className="hover:underline">Tornei</Link>
+            <Link to="/tournaments/history" className="hover:underline">Storico tornei</Link>
             <Link to="/teams" className="hover:underline">Squadre</Link>
           </nav>
         </div>
