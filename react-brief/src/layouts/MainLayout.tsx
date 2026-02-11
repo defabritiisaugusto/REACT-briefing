@@ -10,22 +10,7 @@ import { Outlet, Link } from 'react-router-dom'
 
 const MainLayout = () => {
   return (
-    <div
-      className="min-h-screen text-white"
-      style={{
-        backgroundColor: "#2f7d32", // verde base del campo
-        backgroundImage: `
-          repeating-linear-gradient(
-            0deg,
-            #2f7d32 0 30px,
-            #238b31 30px 60px
-          ),
-          linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.05))
-        `,
-        backgroundSize: "100% 60px",
-        backgroundAttachment: "fixed",
-      }}
-    >
+    <div className="min-h-screen text-white bg-[repeating-linear-gradient(0deg,#2f7d32_0_30px,#238b31_30px_60px),linear-gradient(to_bottom,rgba(0,0,0,0.1),rgba(0,0,0,0.05))] bg-[length:100%_60px] bg-fixed">
       <header className="px-4 w-full max-w-6xl mx-auto">
         <div className="p-4 mt-6 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-2xl flex items-center justify-between">
           <p className="font-extrabold text-2xl tracking-wider uppercase text-yellow-400 drop-shadow-lg">
