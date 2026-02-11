@@ -1,3 +1,12 @@
+// Button (UI di base)
+// -------------------
+// Questo componente è il bottone "generico" dell'interfaccia.
+// - incapsula il ButtonPrimitive di @base-ui/react/button
+// - usa class-variance-authority (cva) per gestire le varianti visive (variant, size)
+// - centralizza le classi Tailwind in buttonVariants per avere uno stile consistente
+// In tutto il progetto, quando importiamo Button da "@/components/ui/button",
+// usiamo questo componente riutilizzabile invece di un semplice <button> HTML.
+
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
 

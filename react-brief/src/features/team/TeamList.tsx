@@ -1,7 +1,16 @@
+// TeamList
+// --------
+// Questo componente mostra l'elenco semplice delle squadre (solo lettura).
+// - usa useQuery di React Query per recuperare la lista da TeamService.list
+// - gestisce gli stati di caricamento ed errore
+// - visualizza ogni squadra dentro una card elegante con nome e ID.
+// Viene riutilizzato, ad esempio, nella MainPage per dare una panoramica veloce delle squadre.
+
 import { useQuery } from "@tanstack/react-query";
 import { TeamService } from "./team.service";
 
 const TeamList = () => {
+  // Chiamata al backend per ottenere tutte le squadre registrate
   const { data: teams, isPending, isError } = useQuery({
     queryKey: ['teams'],
     queryFn: TeamService.list,

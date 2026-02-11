@@ -14,6 +14,7 @@ import { TeamService } from "@/features/team/team.service";
 import type { Team } from "@/features/team/team.type";
 import { TournamentService } from "@/features/tournament/tournament.service";
 import { TournamentTeamService } from "@/features/tournament_team/tournament_team.service";
+import { RoundService } from "@/features/round/round.service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
 
@@ -39,6 +40,36 @@ const TournamentCreatePage = () => {
         name: payload.name,
         date: payload.date,
         place: payload.place,
+      });
+
+      // 1b) creiamo i 3 round standard per questo torneo nella tabella "rounds"
+      //    - Quarti di finale
+      //    - Semifinali
+      //    - Finale
+      // In questo modo, quando guardi la tabella rounds in DBeaver,
+      // vedi da subito i round collegati al nuovo torneo.
+      await RoundService.create({
+        data: {
+          idTournament: tournament.id,
+          name: "Quarti di finale",
+          status: "pending",
+        },
+      });
+
+      await RoundService.create({
+        data: {
+          idTournament: tournament.id,
+          name: "Semifinali",
+          status: "pending",
+        },
+      });
+
+      await RoundService.create({
+        data: {
+          idTournament: tournament.id,
+          name: "Finale",
+          status: "pending",
+        },
       });
 
       // 2) iscriviamo le squadre selezionate, una alla volta

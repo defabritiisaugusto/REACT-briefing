@@ -1,3 +1,11 @@
+// MainLayout
+// ----------
+// Questo layout definisce l'aspetto "di base" di tutta l'app:
+// - sfondo stile campo da calcio
+// - header con il titolo del torneo e il menu di navigazione principale
+// - area centrale dove React Router inserisce dinamicamente la pagina corrente tramite <Outlet />.
+// In pratica: tutto ciò che è comune a tutte le pagine sta qui, mentre i contenuti cambiano all'interno dell'Outlet.
+
 import { Outlet, Link } from 'react-router-dom'
 
 const MainLayout = () => {
@@ -64,6 +72,7 @@ const MainLayout = () => {
       </header>
 
       <main className="px-4 w-full max-w-6xl mx-auto mt-10 pb-16">
+        {/* Qui React Router renderizza la pagina corrispondente alla rotta attuale */}
         <Outlet />
       </main>
     </div>

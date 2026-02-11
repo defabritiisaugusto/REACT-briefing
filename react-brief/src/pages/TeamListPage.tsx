@@ -1,3 +1,12 @@
+// TeamListPage
+// ------------
+// Questa pagina è la vista completa di gestione delle squadre.
+// - legge tutte le squadre dal backend con React Query (TeamService.list)
+// - mostra stato di caricamento ed eventuali errori
+// - per ogni squadra rende disponibile un pulsante di eliminazione (DeleteButton)
+// - include in alto il form CreateTeamForm per aggiungere rapidamente una nuova squadra.
+// È la pagina ideale da usare nel briefing per spiegare CRUD sulle squadre (create + delete + read).
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { TeamService } from "@/features/team/team.service";
 import type { Team } from "@/features/team/team.type";
@@ -5,15 +14,33 @@ import DeleteButton from "@/components/DeleteButton";
 import CreateTeamForm from "@/components/CreateButton";
 
 const TeamListPage = () => {
+  // useQueryClient ci dà accesso all'istanza di QueryClient
+  // Serve soprattutto per "invalidare" una query (forzare un refresh dei dati in cache)
   const queryClient = useQueryClient();
 
+  // useMutation
+  // -----------
+  // useMutation serve per gestire operazioni di scrittura verso il backend
+  // (POST, PUT, DELETE...). In questo caso la usiamo per eliminare una squadra.
+  // - mutationFn: funzione che viene chiamata quando facciamo deleteTeamMutation.mutate(id)
+  // - onSuccess: cosa fare dopo che il backend ha risposto OK (qui ricarichiamo la lista "teams").
   const deleteTeamMutation = useMutation({
     mutationFn: (id: number) => TeamService.delete(id),
     onSuccess: () => {
+      // Invalida la cache della query "teams" così React Query rifà la richiesta al backend
       queryClient.invalidateQueries({ queryKey: ["teams"] });
     },
   });
 
+  // useQuery
+  // --------
+  // useQuery serve per leggere dati dal backend in modo dichiarativo e con cache automatica.
+  // - queryKey: chiave univoca della query nella cache
+  // - queryFn: funzione che esegue la richiesta HTTP e restituisce i dati (lista di Team).
+  // Il risultato include:
+  // - data: i dati restituiti (qui la lista di Team)
+  // - isLoading: true finché la richiesta è in corso
+  // - isError / error: gestiscono eventuali errori di rete o di server
   const { data, isLoading, isError, error } = useQuery<Team[]>({
     queryKey: ["teams"],
     queryFn: () => TeamService.list(),

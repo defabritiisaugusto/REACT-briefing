@@ -1,3 +1,12 @@
+// TournamentHistoryPage
+// ----------------------
+// Questa pagina mostra lo STORICO dei tornei conclusi.
+// - usa una query per leggere solo i tornei con status "completed" (TournamentService.listByStatus)
+// - usa una seconda query per leggere tutte le squadre (TeamService.list)
+// - incrocia i dati per trovare il nome della squadra vincitrice (winner_team_id → Team.name)
+// - rende una card per ogni torneo con luogo, data, vincitore e ID.
+// È il posto giusto per raccontare nel briefing come si riconciliano più entità (tornei + squadre) lato frontend.
+
 import { useQuery } from "@tanstack/react-query";
 import { TournamentService } from "@/features/tournament/tournament.service";
 import type { Tournament } from "@/features/tournament/tournament.type";
@@ -5,11 +14,16 @@ import { TeamService } from "@/features/team/team.service";
 import type { Team } from "@/features/team/team.type";
 
 const TournamentHistoryPage = () => {
+  // Prima query: recupera SOLO i tornei con stato "completed".
+  // - queryKey: ["tournaments", "completed"] → chiave distinta dalla lista generale dei tornei
+  // - queryFn: chiama TournamentService.listByStatus("completed") sul backend.
   const { data, isLoading, isError, error } = useQuery<Tournament[]>({
     queryKey: ["tournaments", "completed"],
     queryFn: () => TournamentService.listByStatus("completed"),
   });
 
+  // Seconda query: recupera tutte le squadre, ci serve per tradurre
+  // winner_team_id (ID numerico) nel nome della squadra vincitrice.
   const {
     data: teams,
     isLoading: isTeamsLoading,

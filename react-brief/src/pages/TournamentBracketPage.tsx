@@ -24,6 +24,8 @@ import { TournamentService } from "@/features/tournament/tournament.service";
 import type { Tournament } from "@/features/tournament/tournament.type";
 import { TournamentTeamService } from "@/features/tournament_team/tournament_team.service";
 import type { TournamentTeam } from "@/features/tournament_team/tournament_team.type";
+import { RoundService } from "@/features/round/round.service";
+import { GameService } from "@/features/game/game.service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -101,6 +103,80 @@ const TournamentBracketPage = () => {
       queryClient.invalidateQueries({ queryKey: ["tournaments", "completed"] });
     },
   });
+
+  // Funzione di utilità per aggiornare lo stato dei round nel DB
+  // Viene chiamata quando decretiamo il campione del torneo.
+  const markRoundsCompleted = async () => {
+    try {
+      // Recuperiamo tutti i round e filtriamo solo quelli di questo torneo
+      const allRounds = await RoundService.list();
+      const tournamentRounds = allRounds.filter(
+        (round) => round.idTournament === tournamentId
+      );
+
+      // Per semplicità impostiamo tutti i round del torneo come "completed"
+      for (const round of tournamentRounds) {
+        await RoundService.update({
+          id: round.id,
+          data: { status: "completed" },
+        });
+      }
+    } catch (error) {
+      console.error("Errore durante l'aggiornamento dei round del torneo:", error);
+    }
+  };
+
+  // Quando abbiamo il vincitore della finale, aggiorniamo anche il game di finale
+  // nella tabella "games" con i gol e il winner_team_id.
+  const updateFinalGame = async (winnerTeamId: number, score: Score) => {
+    try {
+      // 1) recuperiamo i round di questo torneo e individuiamo quello di Finale
+      const allRounds = await RoundService.list();
+      const finalRound = allRounds.find(
+        (round) => round.idTournament === tournamentId && round.name === "Finale"
+      );
+
+      if (!finalRound) {
+        console.warn("Round 'Finale' non trovato per il torneo", tournamentId);
+        return;
+      }
+
+      // 2) ricaviamo gli id delle due squadre finaliste a partire dai loro nomi
+      const finalTeam1Id = teams?.find((team) => team.name === finalTeam1Name)?.id ?? null;
+      const finalTeam2Id = teams?.find((team) => team.name === finalTeam2Name)?.id ?? null;
+
+      if (!finalTeam1Id || !finalTeam2Id) {
+        console.warn("Impossibile determinare gli ID delle squadre di finale");
+        return;
+      }
+
+      // 3) leggiamo tutti i games e troviamo quello della finale
+      const allGames = await GameService.list();
+      const finalGame = allGames.find(
+        (game) =>
+          game.idRound === finalRound.id &&
+          ((game.team1Id === finalTeam1Id && game.team2Id === finalTeam2Id) ||
+            (game.team1Id === finalTeam2Id && game.team2Id === finalTeam1Id))
+      );
+
+      if (!finalGame) {
+        console.warn("Game di finale non trovato per il torneo", tournamentId);
+        return;
+      }
+
+      // 4) aggiorniamo goals_team1, goals_team2 e winner_team_id per quel game
+      await GameService.update({
+        id: finalGame.id,
+        data: {
+          goalsTeam1: score.goals1,
+          goalsTeam2: score.goals2,
+          winnerTeamId: winnerTeamId,
+        },
+      });
+    } catch (error) {
+      console.error("Errore durante l'aggiornamento del game di finale:", error);
+    }
+  };
 
   // 4) Da TournamentTeam e Team ricaviamo un semplice array di nomi squadra.
  
@@ -311,6 +387,11 @@ const TournamentBracketPage = () => {
         if (winnerTeam) {
           // Comunichiamo al backend quale squadra ha vinto il torneo
           completeTournamentMutation.mutate(winnerTeam.id);
+          // In parallelo aggiorniamo lo stato dei round sul backend
+          // (segniamo tutti i round del torneo come "completed").
+          markRoundsCompleted();
+          // E aggiorniamo anche il game di finale con i gol e il vincitore
+          updateFinalGame(winnerTeam.id, next);
         }
         setHasMarkedCompleted(true);
       }

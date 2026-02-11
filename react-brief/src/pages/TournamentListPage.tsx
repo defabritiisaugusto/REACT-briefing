@@ -1,3 +1,12 @@
+// TournamentListPage
+// -------------------
+// Pagina che mostra l'elenco dei tornei ATTIVI.
+// - usa useQuery per leggere tutti i tornei da TournamentService.list
+// - filtra quelli con status !== "completed" (quindi solo quelli in corso/da giocare)
+// - per ogni torneo mostra nome, luogo, data e ID
+// - offre un link per aprire la pagina del tabellone (TournamentBracketPage)
+// - permette di eliminare un torneo tramite DeleteButton e una mutation di React Query.
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { TournamentService } from "@/features/tournament/tournament.service";
@@ -5,8 +14,18 @@ import type { Tournament } from "@/features/tournament/tournament.type";
 import DeleteButton from "@/components/DeleteButton";
 
 const TournamentListPage = () => {
+  // useQueryClient ci permette di interagire con la cache di React Query
+  // la cache è una sorta di "magazzino" dove React Query tiene i dati letti dal backend.
+  // In questo caso ci serve per "invalidare" la query "tournaments" dopo aver eliminato un torneo,
+  // così la lista dei tornei viene ricaricata automaticamente.
   const queryClient = useQueryClient();
 
+  //useMutation è un hook di React Query che ci permette di gestire operazioni di scrittura verso il backend (POST, PUT, DELETE) e di aggiornare l'interfaccia dell'utente in base al risultato.
+  // useMutation per eliminare un torneo
+  // Qui definiamo:
+  // - mutationFn: chiamata a TournamentService.delete(id) quando facciamo deleteTournamentMutation.mutate(id)
+  // - onSuccess: dopo l'eliminazione andata a buon fine, invalidiamo la query "tournaments"
+  //   così la lista dei tornei viene ricaricata dal backend.
   const deleteTournamentMutation = useMutation({
     mutationFn: (id: number) => TournamentService.delete(id),
     onSuccess: () => {
@@ -14,6 +33,10 @@ const TournamentListPage = () => {
     },
   });
 
+  // useQuery per leggere tutti i tornei
+  // - queryKey: identifica questa query nella cache
+  // - queryFn: funzione che chiama TournamentService.list() e restituisce la lista di Tournament
+  // I flag isLoading/isError ci dicono se la richiesta è in corso o fallita.
   const { data, isLoading, isError, error } = useQuery<Tournament[]>({
     queryKey: ["tournaments"],
     queryFn: () => TournamentService.list(),
