@@ -8,20 +8,20 @@
 // - se va bene, svuotiamo i campi, aggiorniamo la lista dei tornei
 // - e iscriviamo le squadre selezionate al nuovo torneo tramite TournamentTeamService
 
-import React, { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { TournamentService } from "@/features/tournament/tournament.service";
 import { TeamService } from "@/features/team/team.service";
 import type { Team } from "@/features/team/team.type";
+import { TournamentService } from "@/features/tournament/tournament.service";
 import { TournamentTeamService } from "@/features/tournament_team/tournament_team.service";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import React, { useState } from "react";
 
 const TournamentCreatePage = () => {
   // stato locale per gestire il valore dei campi del form
   const [name, setName] = useState("");
   const [date, setDate] = useState("");
+  const [place, setPlace] = useState("");
   // array di ID delle squadre selezionate per il torneo (max 8 per semplicità)
   const [selectedTeamIds, setSelectedTeamIds] = useState<number[]>([]);
 
@@ -33,11 +33,12 @@ const TournamentCreatePage = () => {
   // 1) creiamo il torneo
   // 2) per ogni squadra selezionata chiamiamo TournamentTeamService.create
   const createTournamentMutation = useMutation({
-    mutationFn: async (payload: { name: string; date?: string; teamIds: number[] }) => {
+    mutationFn: async (payload: { name: string; date?: string; place: string; teamIds: number[] }) => {
       // 1) creiamo il torneo sul backend
       const tournament = await TournamentService.create({
         name: payload.name,
         date: payload.date,
+        place: payload.place,
       });
 
       // 2) iscriviamo le squadre selezionate, una alla volta
@@ -105,6 +106,7 @@ const TournamentCreatePage = () => {
     event.preventDefault();
 
     const trimmedName = name.trim();
+    const trimnedPlace = place.trim();
     if (!trimmedName) return;
 
     // Inviamo nome, data (se presente) e l'elenco delle squadre selezionate.
@@ -112,124 +114,155 @@ const TournamentCreatePage = () => {
       name: trimmedName,
       date: date || undefined,
       teamIds: selectedTeamIds,
+      place: trimnedPlace,
+
     });
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto mt-8 px-4 pb-4">
-      <Card className="shadow-sm">
-        <CardHeader className="border-b bg-muted/40">
-          <CardTitle className="text-lg font-semibold">Crea un nuovo torneo</CardTitle>
-          <CardDescription>
-            Inserisci il nome del torneo, la data e le squadre che ci partecipano... poi clicca su "Crea torneo".
-          </CardDescription>
-        </CardHeader>
+    <div className="space-y-10 pb-10">
 
-        <CardContent className="pt-4">
-          {/* Form molto semplice con un input di testo e un bottone */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="tournament-name">
-                Nome del torneo
-              </label>
-              <Input
-                id="tournament-name"
-                placeholder="Es. Torneo Serie A 2026"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-              />
-            </div>
+      {/* HEADER */}
+      <div className="text-center">
+        <h1 className="text-3xl font-extrabold uppercase tracking-wider text-yellow-400 drop-shadow-lg">
+          🏆 Organizza Nuovo Torneo
+        </h1>
+        <p className="text-white/70 mt-2">
+          Crea un evento ufficiale e seleziona le squadre partecipanti
+        </p>
+      </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="tournament-date">
-                Data del torneo (opzionale)
-              </label>
-              <Input
-                id="tournament-date"
-                type="date"
-                value={date}
-                onChange={(event) => setDate(event.target.value)}
-              />
-            </div>
+      {/* FORM CARD */}
+      <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-2xl max-w-4xl mx-auto">
 
-            {/* Sezione per la selezione delle squadre */}
-            <div className="space-y-2">
-              <p className="text-sm font-medium">
-                Seleziona le squadre da inserire nel torneo
-                <span className="ml-1 text-xs text-gray-500">
-                  (max 8, selezionate: {selectedTeamIds.length})
-                </span>
+        <form onSubmit={handleSubmit} className="space-y-6">
+
+          {/* Nome torneo */}
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-white/80 uppercase tracking-wide">
+              Nome del torneo
+            </label>
+            <Input
+              placeholder="Es. Torneo Defa Cup"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              className="bg-black/30 border-white/20 text-white placeholder:text-white/40"
+            />
+          </div>
+
+          {/* Data */}
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-white/80 uppercase tracking-wide">
+              Data del torneo
+            </label>
+            <Input
+              type="date"
+              value={date}
+              onChange={(event) => setDate(event.target.value)}
+              className="bg-black/30 border-white/20 text-white"
+            />
+          </div>
+          {/* Luogo del torneo */}
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-white/80 uppercase tracking-wide">
+              Luogo del torneo
+            </label>
+            <Input
+              id="tournament-place"
+              placeholder="Es. Campetto Defa"
+              value={place}
+              onChange={(event) => setPlace(event.target.value)}
+              className="bg-black/30 border-white/20 text-white placeholder:text-white/40"
+            />
+          </div>
+
+          {/* Selezione squadre */}
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-white/80 uppercase tracking-wide">
+              ⚽ Seleziona le squadre
+              <span className="ml-2 text-xs text-yellow-400">
+                (max 8 – selezionate: {selectedTeamIds.length})
+              </span>
+            </p>
+
+            {isTeamsLoading && (
+              <p className="text-sm text-yellow-400 animate-pulse">
+                Caricamento squadre...
               </p>
+            )}
 
-              {/* Gestione stati caricamento/errore delle squadre */}
-              {isTeamsLoading && (
-                <p className="text-xs text-gray-600">Caricamento squadre...</p>
-              )}
+            {isTeamsError && (
+              <p className="text-sm text-red-400">
+                Errore nel caricamento delle squadre.
+                {teamsError instanceof Error && (
+                  <span className="block text-xs opacity-70">
+                    {teamsError.message}
+                  </span>
+                )}
+              </p>
+            )}
 
-              {isTeamsError && (
-                <p className="text-xs text-red-600">
-                  Errore nel caricamento delle squadre.
-                  {teamsError instanceof Error && (
-                    <span className="block text-[10px] text-red-500">
-                      Dettaglio: {teamsError.message}
-                    </span>
-                  )}
-                </p>
-              )}
+            {!isTeamsLoading && !isTeamsError && teams && (
+              <div className="grid sm:grid-cols-2 gap-3 max-h-72 overflow-auto pr-2">
+                {teams.map((team) => {
+                  const checked = selectedTeamIds.includes(team.id);
 
-              {/* Lista delle squadre con checkbox per la selezione */}
-              {!isTeamsLoading && !isTeamsError && teams && (
-                <ul className="max-h-60 overflow-auto rounded-md border bg-card px-3 py-2 space-y-1 text-sm">
-                  {teams.map((team) => {
-                    const checked = selectedTeamIds.includes(team.id);
-                    return (
-                      <li
-                        key={team.id}
-                        className="flex items-center justify-between gap-2 py-1"
-                      >
-                        <label className="flex items-center gap-2 flex-1 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            className="size-3.5"
-                            checked={checked}
-                            onChange={() => toggleTeamSelection(team.id)}
-                          />
-                          <span>{team.name}</span>
-                        </label>
-                        <span className="text-[10px] text-gray-400">ID: {team.id}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
+                  return (
+                    <div
+                      key={team.id}
+                      onClick={() => toggleTeamSelection(team.id)}
+                      className={`cursor-pointer rounded-xl p-3 border transition-all duration-200
+                      ${checked
+                          ? "bg-yellow-400/20 border-yellow-400/50"
+                          : "bg-white/5 border-white/10 hover:bg-white/10"
+                        }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-white font-medium">
+                          {team.name}
+                        </span>
+                        <span className="text-xs text-white/40">
+                          ID: {team.id}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
-            <div className="flex items-center gap-3">
-              <Button
-                type="submit"
-                disabled={createTournamentMutation.isPending || !name.trim()}
-              >
-                {createTournamentMutation.isPending ? "Creazione in corso..." : "Crea torneo"}
-              </Button>
+          {/* BOTTONI E FEEDBACK */}
+          <div className="flex items-center gap-4 pt-4">
 
-              {/* Messaggi di feedback molto semplici */}
-              {createTournamentMutation.isSuccess && (
-                <span className="text-xs text-green-600">
-                  Torneo creato con successo!
-                </span>
-              )}
+            <Button
+              type="submit"
+              disabled={createTournamentMutation.isPending || !name.trim()}
+              className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold uppercase tracking-wide px-6"
+            >
+              {createTournamentMutation.isPending
+                ? "Creazione in corso..."
+                : "Crea Torneo"}
+            </Button>
 
-              {createTournamentMutation.isError && (
-                <span className="text-xs text-red-600">
-                  Errore nella creazione del torneo.
-                </span>
-              )}
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+            {createTournamentMutation.isSuccess && (
+              <span className="text-sm text-green-400 font-semibold">
+                ✅ Torneo creato con successo!
+              </span>
+            )}
+
+            {createTournamentMutation.isError && (
+              <span className="text-sm text-red-400 font-semibold">
+                ❌ Errore nella creazione del torneo.
+              </span>
+            )}
+          </div>
+
+        </form>
+      </div>
     </div>
   );
+
 };
 
 export default TournamentCreatePage;

@@ -8,7 +8,7 @@
 // squadre iscritte al torneo e posizionate in modo casuale nei quarti.
 //
 // Flusso da spiegare:
-// 1) Quando entri nella pagina, le 8 squadre iscritte al torneo vengono
+// 1) Quando entro nella pagina, le 8 squadre iscritte al torneo vengono
 //    posizionate in modo random nei quarti di finale.
 // 2) Nei quarti inserisci i gol: in base ai gol viene calcolato
 //    subito il nome della squadra vincente.
@@ -16,17 +16,17 @@
 // 4) La finale usa automaticamente i vincitori delle semifinali.
 // 5) Sotto la finale compare la scritta con il nome della squadra campione.
 
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { TeamService } from "@/features/team/team.service";
+import type { Team } from "@/features/team/team.type";
 import { TournamentService } from "@/features/tournament/tournament.service";
 import type { Tournament } from "@/features/tournament/tournament.type";
 import { TournamentTeamService } from "@/features/tournament_team/tournament_team.service";
 import type { TournamentTeam } from "@/features/tournament_team/tournament_team.type";
-import { TeamService } from "@/features/team/team.service";
-import type { Team } from "@/features/team/team.type";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 
 type Score = {
   goals1: number | null;
@@ -320,169 +320,169 @@ const TournamentBracketPage = () => {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto mt-8 px-4 pb-8">
-      <Card className="shadow-sm">
-        <CardHeader className="border-b bg-muted/40">
-          <CardTitle className="text-lg font-semibold">
-            Tabellone semplice: {tournament.name}
-          </CardTitle>
-          <CardDescription>
-            Le squadre iscritte al torneo vengono posizionate in modo casuale nei quarti.
-            Inserisci i risultati e guarda chi avanza fino alla finale.
-          </CardDescription>
-        </CardHeader>
+  <div className="space-y-10 pb-10">
 
-        <CardContent className="pt-6 space-y-6">
-          {/* Tabellone: quarti, semifinali, finale */}
-          <section>
-            <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start justify-between">
-              {/* Quarti di finale */}
-              <div className="flex-1 min-w-55">
-                <h3 className="font-semibold text-base mb-3 text-center">Quarti di finale</h3>
-                <div className="space-y-3">
-                  {quarterMatches.map((match, index) => (
-                    <div
-                      key={match.id}
-                      className="border rounded-lg p-3 bg-card shadow-sm flex flex-col gap-2"
-                    >
-                      <p className="text-xs font-medium text-gray-600 mb-1">
-                        Quarto {match.id}
-                      </p>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="flex-1 truncate">{match.team1Name}</span>
-                        <Input
-                          type="number"
-                          className="w-14 h-8 text-center text-sm"
-                          min={0}
-                          value={match.score.goals1 ?? ""}
-                          onChange={(e) =>
-                            handleQuarterScoreChange(index, "goals1", e.target.value)
-                          }
-                        />
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="flex-1 truncate">{match.team2Name}</span>
-                        <Input
-                          type="number"
-                          className="w-14 h-8 text-center text-sm"
-                          min={0}
-                          value={match.score.goals2 ?? ""}
-                          onChange={(e) =>
-                            handleQuarterScoreChange(index, "goals2", e.target.value)
-                          }
-                        />
-                      </div>
-                      {match.winnerName && (
-                        <p className="text-[11px] text-emerald-700 font-medium mt-1">
-                          Avanza: {match.winnerName}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Semifinali */}
-              <div className="flex-1 min-w-55">
-                <h3 className="font-semibold text-base mb-3 text-center">Semifinali</h3>
-                <div className="space-y-3">
-                  {semiMatches.map((match, index) => (
-                    <div
-                      key={match.id}
-                      className="border rounded-lg p-3 bg-card shadow-sm flex flex-col gap-2"
-                    >
-                      <p className="text-xs font-medium text-gray-600 mb-1">
-                        Semifinale {match.id}
-                      </p>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="flex-1 truncate">
-                          {match.team1Name || "In attesa vincente quarti"}
-                        </span>
-                        <Input
-                          type="number"
-                          className="w-14 h-8 text-center text-sm"
-                          min={0}
-                          value={match.score.goals1 ?? ""}
-                          onChange={(e) =>
-                            handleSemiScoreChange(index, "goals1", e.target.value)
-                          }
-                          disabled={!match.team1Name || !match.team2Name}
-                        />
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="flex-1 truncate">
-                          {match.team2Name || "In attesa vincente quarti"}
-                        </span>
-                        <Input
-                          type="number"
-                          className="w-14 h-8 text-center text-sm"
-                          min={0}
-                          value={match.score.goals2 ?? ""}
-                          onChange={(e) =>
-                            handleSemiScoreChange(index, "goals2", e.target.value)
-                          }
-                          disabled={!match.team1Name || !match.team2Name}
-                        />
-                      </div>
-                      {match.winnerName && (
-                        <p className="text-[11px] text-emerald-700 font-medium mt-1">
-                          Avanza: {match.winnerName}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Finale */}
-              <div className="flex-1 min-w-55">
-                <h3 className="font-semibold text-base mb-3 text-center">Finale</h3>
-                <div className="border rounded-lg p-3 bg-card shadow-sm flex flex-col gap-2">
-                  <p className="text-xs font-medium text-gray-600 mb-1">Finale</p>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="flex-1 truncate">
-                      {finalTeam1Name || "In attesa vincente semifinale"}
-                    </span>
-                    <Input
-                      type="number"
-                      className="w-14 h-8 text-center text-sm"
-                      min={0}
-                      value={finalScore.goals1 ?? ""}
-                      onChange={(e) => handleFinalScoreChange("goals1", e.target.value)}
-                      disabled={!finalTeam1Name || !finalTeam2Name}
-                    />
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="flex-1 truncate">
-                      {finalTeam2Name || "In attesa vincente semifinale"}
-                    </span>
-                    <Input
-                      type="number"
-                      className="w-14 h-8 text-center text-sm"
-                      min={0}
-                      value={finalScore.goals2 ?? ""}
-                      onChange={(e) => handleFinalScoreChange("goals2", e.target.value)}
-                      disabled={!finalTeam1Name || !finalTeam2Name}
-                    />
-                  </div>
-                  {championName && (
-                    <div className="mt-3 border border-emerald-300 bg-emerald-50 rounded-md p-2 text-center">
-                      <p className="text-[11px] text-emerald-800 font-semibold">
-                        Il torneo è concluso!
-                      </p>
-                      <p className="text-sm font-bold text-emerald-900">
-                        Squadra vincente: {championName}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </section>
-        </CardContent>
-      </Card>
+    {/* HEADER TORNEO */}
+    <div className="text-center">
+      <h1 className="text-3xl font-extrabold uppercase tracking-wider text-yellow-400 drop-shadow-lg">
+        🏆 {tournament.name}
+      </h1>
+      <p className="text-white/70 mt-2">
+        Tabellone ufficiale – Inserisci i risultati e decreta il campione
+      </p>
     </div>
-  );
+
+    {/* BRACKET */}
+    <div className="flex flex-col xl:flex-row gap-8 justify-between">
+
+      {/* QUARTI */}
+      <div className="flex-1 space-y-4">
+        <h3 className="text-center font-bold text-yellow-400 tracking-wide uppercase">
+          Quarti di Finale
+        </h3>
+
+        {quarterMatches.map((match, index) => (
+          <div
+            key={match.id}
+            className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-xl space-y-2"
+          >
+            <p className="text-xs text-white/50 uppercase tracking-wider">
+              Match {match.id}
+            </p>
+
+            {[match.team1Name, match.team2Name].map((team, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <span className="flex-1 text-sm truncate text-white">
+                  {team}
+                </span>
+                <Input
+                  type="number"
+                  min={0}
+                  value={
+                    i === 0
+                      ? match.score.goals1 ?? ""
+                      : match.score.goals2 ?? ""
+                  }
+                  onChange={(e) =>
+                    handleQuarterScoreChange(
+                      index,
+                      i === 0 ? "goals1" : "goals2",
+                      e.target.value
+                    )
+                  }
+                  className="w-16 h-9 text-center bg-black/30 border-white/20 text-white"
+                />
+              </div>
+            ))}
+
+            {match.winnerName && (
+              <p className="text-xs text-yellow-400 font-semibold mt-2">
+                ⚡ Avanza: {match.winnerName}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* SEMIFINALI */}
+      <div className="flex-1 space-y-4">
+        <h3 className="text-center font-bold text-yellow-400 tracking-wide uppercase">
+          Semifinali
+        </h3>
+
+        {semiMatches.map((match, index) => (
+          <div
+            key={match.id}
+            className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-xl space-y-2"
+          >
+            {[match.team1Name || "In attesa...", match.team2Name || "In attesa..."].map(
+              (team, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <span className="flex-1 text-sm truncate text-white">
+                    {team}
+                  </span>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={
+                      i === 0
+                        ? match.score.goals1 ?? ""
+                        : match.score.goals2 ?? ""
+                    }
+                    onChange={(e) =>
+                      handleSemiScoreChange(
+                        index,
+                        i === 0 ? "goals1" : "goals2",
+                        e.target.value
+                      )
+                    }
+                    disabled={!match.team1Name || !match.team2Name}
+                    className="w-16 h-9 text-center bg-black/30 border-white/20 text-white disabled:opacity-40"
+                  />
+                </div>
+              )
+            )}
+
+            {match.winnerName && (
+              <p className="text-xs text-yellow-400 font-semibold mt-2">
+                ⚡ Avanza: {match.winnerName}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* FINALE */}
+      <div className="flex-1 space-y-4">
+        <h3 className="text-center font-bold text-yellow-400 tracking-wide uppercase">
+          Finale
+        </h3>
+
+        <div className="bg-white/10 backdrop-blur-md border border-yellow-400/40 rounded-2xl p-5 shadow-2xl space-y-3">
+
+          {[finalTeam1Name || "In attesa...", finalTeam2Name || "In attesa..."].map(
+            (team, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <span className="flex-1 text-sm truncate text-white font-medium">
+                  {team}
+                </span>
+                <Input
+                  type="number"
+                  min={0}
+                  value={
+                    i === 0
+                      ? finalScore.goals1 ?? ""
+                      : finalScore.goals2 ?? ""
+                  }
+                  onChange={(e) =>
+                    handleFinalScoreChange(
+                      i === 0 ? "goals1" : "goals2",
+                      e.target.value
+                    )
+                  }
+                  disabled={!finalTeam1Name || !finalTeam2Name}
+                  className="w-16 h-9 text-center bg-black/40 border-yellow-400/40 text-white disabled:opacity-40"
+                />
+              </div>
+            )
+          )}
+
+          {championName && (
+            <div className="mt-4 bg-yellow-400/20 border border-yellow-400/40 rounded-xl p-4 text-center shadow-lg animate-pulse">
+              <p className="text-xs uppercase tracking-widest text-yellow-300">
+                🏆 Campione del Torneo
+              </p>
+              <p className="text-xl font-extrabold text-yellow-400 mt-1">
+                {championName}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 };
 
 export default TournamentBracketPage;

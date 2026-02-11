@@ -32,12 +32,13 @@ export class TournamentService {
   // Il backend richiede che il campo "status" NON sia nullo, quindi impostiamo
   // esplicitamente lo stato iniziale a "pending".
   
-  static async create({ name, date }: { name: string; date?: string }): Promise<Tournament> {
+  static async create({ name, date, place }: { name: string; date?: string; place?: string }): Promise<Tournament> {
     const newTournament = await myFetch<Tournament>(`${myEnv.backendApiUrl}/tournaments`, {
       method: 'POST',
       body: JSON.stringify({
         name,
         date,
+        place,
         status: "pending" as TournamentStatus,
       })
     });

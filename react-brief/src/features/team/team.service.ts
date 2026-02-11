@@ -26,10 +26,10 @@ export class TeamService {
     return updateTeam;
   }
 
-  static async create({ id, name }: { id: number, name: string }): Promise<Team> {
+  static async create({ name }: { name: string }): Promise<Team> {
     const newTeam = await myFetch<Team>(`${myEnv.backendApiUrl}/teams`, {
       method: 'POST',
-      body: JSON.stringify({ id, name })
+      body: JSON.stringify({  name })
     });
     return newTeam;
   }

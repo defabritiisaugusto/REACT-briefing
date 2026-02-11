@@ -15,7 +15,7 @@ import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 import "./index.css";
 import MainLayout from "./layouts/MainLayout";
-import HomePage from "./pages/HomePage";
+import HomePage from "./pages/MainPage";
 import TournamentListPage from "./pages/TournamentListPage";
 import TeamListPage from "./pages/TeamListPage";
 import TournamentCreatePage from "./pages/TournamentCreatePage";
@@ -45,7 +45,7 @@ const router = createBrowserRouter([
         element: <TournamentBracketPage />,
       },
       {
-        path: "tournaments/manage",
+        path: "tournaments/create",
         element: <TournamentCreatePage />,
       },
       {

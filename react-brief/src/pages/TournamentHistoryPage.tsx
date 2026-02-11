@@ -1,25 +1,15 @@
-// TournamentHistoryPage
-// ----------------------
-// Questa pagina mostra lo "storico tornei": tutti i tornei che
-// sono stati conclusi (cioè hanno un vincitore in finale) e che
-// abbiamo marcato come completati lato frontend.
-
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { TournamentService } from "@/features/tournament/tournament.service";
 import type { Tournament } from "@/features/tournament/tournament.type";
 import { TeamService } from "@/features/team/team.service";
 import type { Team } from "@/features/team/team.type";
 
 const TournamentHistoryPage = () => {
-  // Carichiamo solo i tornei con stato "completed" direttamente dal backend
   const { data, isLoading, isError, error } = useQuery<Tournament[]>({
     queryKey: ["tournaments", "completed"],
     queryFn: () => TournamentService.listByStatus("completed"),
   });
 
-  // Carichiamo tutte le squadre una sola volta: ci serve per tradurre
-  // winner_team_id (numero) -> nome della squadra vincitrice mostrato nella lista
   const {
     data: teams,
     isLoading: isTeamsLoading,
@@ -31,12 +21,10 @@ const TournamentHistoryPage = () => {
 
   if (isLoading || isTeamsLoading) {
     return (
-      <div className="w-full max-w-4xl mx-auto mt-8 px-4">
-        <Card className="shadow-sm">
-          <CardContent>
-            <p>Caricamento storico tornei...</p>
-          </CardContent>
-        </Card>
+      <div className="flex justify-center items-center py-20">
+        <div className="animate-pulse text-yellow-400 text-lg font-semibold tracking-wide">
+          🏆 Caricamento Hall of Fame...
+        </div>
       </div>
     );
   }
@@ -44,15 +32,15 @@ const TournamentHistoryPage = () => {
   if (isError || isTeamsError) {
     console.error("Errore nel caricamento dello storico tornei:", error);
     return (
-      <div className="w-full max-w-4xl mx-auto mt-8 px-4">
-        <Card className="border-red-200 bg-red-50/60 shadow-sm">
-          <CardContent>
-            <p className="text-red-600 font-medium">Errore nel caricamento dello storico tornei.</p>
-            {error instanceof Error && (
-              <p className="text-xs text-red-500 mt-1">Dettaglio: {error.message}</p>
-            )}
-          </CardContent>
-        </Card>
+      <div className="max-w-4xl mx-auto mt-10">
+        <div className="bg-red-500/20 border border-red-400/40 text-red-300 p-6 rounded-2xl shadow-xl text-center">
+          ❌ Errore nel caricamento dello storico tornei.
+          {error instanceof Error && (
+            <p className="text-xs mt-2 opacity-80">
+              Dettaglio: {error.message}
+            </p>
+          )}
+        </div>
       </div>
     );
   }
@@ -60,54 +48,74 @@ const TournamentHistoryPage = () => {
   const completedTournaments = data ?? [];
 
   return (
-    <div className="w-full max-w-4xl mx-auto mt-8 px-4 pb-4">
-      <Card className="shadow-sm">
-        <CardHeader className="border-b bg-muted/40">
-          <CardTitle className="text-lg font-semibold">Storico tornei</CardTitle>
-          <CardDescription>
-            Tutti i tornei conclusi (cioè con una squadra vincente in finale).
-          </CardDescription>
-        </CardHeader>
+    <div className="space-y-10">
 
-        <CardContent className="pt-4">
-          {completedTournaments.length === 0 ? (
-            <p className="text-gray-600">Nessun torneo concluso al momento.</p>
-          ) : (
-            <ul className="space-y-3">
-              {completedTournaments.map((tournament) => {
-                // Se il backend ha impostato winner_team_id, troviamo il nome squadra corrispondente
-                const winnerName =
-                  tournament.winner_team_id != null && teams
-                    ? teams.find((team) => team.id === tournament.winner_team_id)?.name
-                    : undefined;
+      {/* HEADER */}
+      <div className="text-center">
+        <h1 className="text-3xl font-extrabold uppercase tracking-wider text-yellow-400 drop-shadow-lg">
+          🏆 Storico Tornei
+        </h1>
+        <p className="text-white/70 mt-2">
+          Tutti i tornei conclusi e le squadre campioni
+        </p>
+      </div>
 
-                return (
-                <li
-                  key={tournament.id}
-                  className="flex items-center justify-between gap-4 rounded-lg border bg-card px-4 py-3 shadow-sm"
-                >
-                  <div className="flex flex-col flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate">{tournament.name}</p>
-                    {tournament.place && (
-                      <p className="text-xs text-gray-600 truncate">Luogo: {tournament.place}</p>
-                    )}
-                    {tournament.date && (
-                      <p className="text-xs text-gray-600 truncate">Data: {tournament.date}</p>
-                    )}
-                    {winnerName && (
-                      <p className="text-xs text-emerald-700 truncate mt-1">
-                        Torneo vinto da: {winnerName}
-                      </p>
-                    )}
-                  </div>
-                  <span className="text-[11px] text-gray-400">ID: {tournament.id}</span>
-                </li>
-                );
-              })}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+      {/* LISTA */}
+      {completedTournaments.length === 0 ? (
+        <div className="text-center text-white/60">
+          Nessun torneo concluso al momento.
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 gap-6">
+          {completedTournaments.map((tournament) => {
+            const winnerName =
+              tournament.winner_team_id != null && teams
+                ? teams.find((team) => team.id === tournament.winner_team_id)?.name
+                : undefined;
+
+            return (
+              <div
+                key={tournament.id}
+                className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-2xl hover:scale-[1.02] transition-all duration-300"
+              >
+                <div className="flex flex-col gap-2">
+
+                  {/* Nome torneo */}
+                  <h2 className="text-lg font-bold tracking-wide text-white">
+                    {tournament.name}
+                  </h2>
+
+                  {/* Info torneo */}
+                  {tournament.place && (
+                    <p className="text-sm text-white/70">
+                      📍 {tournament.place}
+                    </p>
+                  )}
+
+                  {tournament.date && (
+                    <p className="text-sm text-white/70">
+                      📅 {tournament.date}
+                    </p>
+                  )}
+
+                  {/* Vincitore */}
+                  {winnerName && (
+                    <div className="mt-4 bg-yellow-400/20 border border-yellow-400/40 text-yellow-300 rounded-xl px-4 py-2 text-sm font-semibold flex items-center justify-between">
+                      <span>🥇 Campione</span>
+                      <span>{winnerName}</span>
+                    </div>
+                  )}
+
+                  {/* ID */}
+                  <span className="text-xs text-white/40 mt-2">
+                    ID: {tournament.id}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

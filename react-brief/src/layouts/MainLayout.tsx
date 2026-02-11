@@ -1,29 +1,72 @@
-// MainLayout è un componente React che definisce la struttura principale dell'applicazione, includendo un header con un menu di navigazione e un'area per il contenuto dinamico (Outlet)
-//  che viene popolata dalle pagine figlie in base alla route.
-// Utilizza React Router per gestire la navigazione tra le pagine, con link a Home, Organizza, Tornei e Squadre. Il layout è responsivo e centrato, con uno stile semplice e pulito.
-
-
 import { Outlet, Link } from 'react-router-dom'
 
 const MainLayout = () => {
   return (
-    <>
+    <div
+      className="min-h-screen text-white"
+      style={{
+        backgroundColor: "#2f7d32", // verde base del campo
+        backgroundImage: `
+          repeating-linear-gradient(
+            0deg,
+            #2f7d32 0 30px,
+            #238b31 30px 60px
+          ),
+          linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.05))
+        `,
+        backgroundSize: "100% 60px",
+        backgroundAttachment: "fixed",
+      }}
+    >
+      <header className="px-4 w-full max-w-6xl mx-auto">
+        <div className="p-4 mt-6 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-2xl flex items-center justify-between">
+          <p className="font-extrabold text-2xl tracking-wider uppercase text-yellow-400 drop-shadow-lg">
+            🏆 TORNEO DEFA
+          </p>
 
-      <header className="px-4 w-full max-w-4xl mx-auto">
-        <div className="p-2 mt-4 border rounded-2xl flex items-center justify-between">
-          <p className="font-bold text-xl pl-2">Torneo Serie A</p>
-          <nav className="flex gap-4">
-            <Link to="/" className="hover:underline">Home</Link>
-            <Link to="/tournaments/manage" className="hover:underline">Organizza</Link>
-            <Link to="/tournaments" className="hover:underline">Tornei</Link>
-            <Link to="/tournaments/history" className="hover:underline">Storico tornei</Link>
-            <Link to="/teams" className="hover:underline">Squadre</Link>
+          <nav className="flex flex-wrap gap-6 text-sm font-semibold tracking-wide">
+            <Link
+              to="/"
+              className="hover:text-yellow-400 transition-colors duration-200 hover:scale-105 transform"
+            >
+              Pagina Iniziale
+            </Link>
+
+            <Link
+              to="/tournaments/create"
+              className="hover:text-yellow-400 transition-colors duration-200 hover:scale-105 transform"
+            >
+              Crea Nuovo Torneo
+            </Link>
+
+            <Link
+              to="/tournaments"
+              className="hover:text-yellow-400 transition-colors duration-200 hover:scale-105 transform"
+            >
+              Tornei
+            </Link>
+
+            <Link
+              to="/tournaments/history"
+              className="hover:text-yellow-400 transition-colors duration-200 hover:scale-105 transform"
+            >
+              Storico Tornei
+            </Link>
+
+            <Link
+              to="/teams"
+              className="hover:text-yellow-400 transition-colors duration-200 hover:scale-105 transform"
+            >
+              Squadre
+            </Link>
           </nav>
         </div>
       </header>
 
-      <Outlet  />
-    </>
+      <main className="px-4 w-full max-w-6xl mx-auto mt-10 pb-16">
+        <Outlet />
+      </main>
+    </div>
   )
 }
 

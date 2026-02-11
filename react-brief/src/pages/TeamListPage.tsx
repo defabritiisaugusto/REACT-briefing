@@ -1,19 +1,12 @@
-// TeamListPage
-// -------------
-// Questa pagina mostra una lista semplice delle squadre presenti nel sistema.
-// Usiamo anche qui un contenitore Card per dare un aspetto più curato,
-// con una lista di squadre tipo "rubrica" (logo + nome + ID).
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { TeamService } from "@/features/team/team.service";
 import type { Team } from "@/features/team/team.type";
 import DeleteButton from "@/components/DeleteButton";
+import CreateTeamForm from "@/components/CreateButton";
 
 const TeamListPage = () => {
-  // queryClient ci serve per aggiornare (invalidare) la lista "teams" dopo una cancellazione
   const queryClient = useQueryClient();
-  // MUTATION PER ELIMINARE UNA SQUADRA
+
   const deleteTeamMutation = useMutation({
     mutationFn: (id: number) => TeamService.delete(id),
     onSuccess: () => {
@@ -21,99 +14,99 @@ const TeamListPage = () => {
     },
   });
 
-  // useQuery chiama TeamService.list() per recuperare tutte le squadre dal backend.
-  // queryKey è "teams", così React Query sa che questi dati rappresentano l'elenco delle squadre.
   const { data, isLoading, isError, error } = useQuery<Team[]>({
     queryKey: ["teams"],
     queryFn: () => TeamService.list(),
   });
 
-  // STATO DI CARICAMENTO (loading)
+  // LOADING
   if (isLoading) {
     return (
-      <div className="w-full max-w-4xl mx-auto mt-8 px-4">
-        <Card className="shadow-sm">
-          <CardContent>
-            <p>Caricamento squadre...</p>
-          </CardContent>
-        </Card>
+      <div className="flex justify-center items-center py-20">
+        <div className="animate-pulse text-yellow-400 text-lg font-semibold tracking-wide">
+          ⚽ Caricamento squadre...
+        </div>
       </div>
     );
   }
 
-  // STATO DI ERRORE
+  // ERROR
   if (isError) {
     console.error("Errore nel caricamento delle squadre:", error);
     return (
-      <div className="w-full max-w-4xl mx-auto mt-8 px-4">
-        <Card className="border-red-200 bg-red-50/60 shadow-sm">
-          <CardContent>
-            <p className="text-red-600 font-medium">Errore nel caricamento delle squadre.</p>
-            {error instanceof Error && (
-              <p className="text-xs text-red-500 mt-1">Dettaglio: {error.message}</p>
-            )}
-          </CardContent>
-        </Card>
+      <div className="max-w-4xl mx-auto mt-10">
+        <div className="bg-red-500/20 border border-red-400/40 text-red-300 p-6 rounded-2xl shadow-xl text-center">
+          ❌ Errore nel caricamento delle squadre.
+          {error instanceof Error && (
+            <p className="text-xs mt-2 opacity-80">
+              Dettaglio: {error.message}
+            </p>
+          )}
+        </div>
       </div>
     );
   }
 
-  // STATO DI SUCCESSO
   const teams = data ?? [];
 
   return (
-    <div className="w-full max-w-4xl mx-auto mt-8 px-4 pb-4">
-      <Card className="shadow-sm">
-        <CardHeader className="border-b bg-muted/40">
-          {/* Titolo principale della pagina */}
-          <CardTitle className="text-lg font-semibold">Lista squadre</CardTitle>
-          <CardDescription>
-            Tutte le squadre disponibili.
-          </CardDescription>
-        </CardHeader>
+    <div className="space-y-10">
 
-        <CardContent className="pt-4">
-          {/* Se non ci sono squadre, mostriamo un messaggio informativo */}
-          {teams.length === 0 ? (
-            <p className="text-gray-600">Nessuna squadra presente.</p>
-          ) : (
-            // Lista di squadre: ogni squadra è una riga con nome e (se presente) immagine
-            <ul className="space-y-3">
-              {teams.map((team) => (
-                <li
-                  key={team.id}
-                  className="flex items-center justify-between gap-4 rounded-lg border bg-card px-4 py-3 shadow-sm hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-center gap-3">
-                    {/* Se è presente un'immagine, la mostriamo come piccolo logo */}
-                    {team.img && (
-                      <img
-                        src={team.img}
-                        alt={team.name}
-                        className="w-10 h-10 rounded-full object-cover border"
-                      />
-                    )}
+      {/* HEADER */}
+      <div className="text-center">
+        <h1 className="text-3xl font-extrabold uppercase tracking-wider text-yellow-400 drop-shadow-lg">
+          ⚽ Squadre Partecipanti
+        </h1>
+        <p className="text-white/70 mt-2">
+          Tutti i club registrati nel torneo
+        </p>
 
-                    {/* Nome della squadra */}
-                    <p className="font-semibold text-sm">{team.name}</p>
+      </div>
+
+      {/* LISTA SQUADRE */}
+      {teams.length === 0 ? (
+        <div className="text-center text-white/60">
+          Nessuna squadra presente.
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <CreateTeamForm />
+          {teams.map((team) => (
+            <div
+              key={team.id}
+              className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-2xl hover:scale-[1.03] transition-all duration-300 group"
+            >
+              <div className="flex items-center justify-between gap-4">
+
+                {/* INFO SQUADRA */}
+                <div className="flex items-center gap-4">
+                  {/* Icona palla da calcio */}
+                  <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-xl">
+                    ⚽️
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    {/* ID della squadra, utile per debug o spiegazioni tecniche */}
-                    <span className="text-[11px] text-gray-400">ID: {team.id}</span>
-
-                    {/* Bottone riutilizzabile per eliminare la squadra */}
-                    <DeleteButton
-                      onConfirm={() => deleteTeamMutation.mutate(team.id)}
-                      label="Elimina squadra"
-                    />
+                  <div>
+                    <h2 className="text-md font-bold text-white group-hover:text-yellow-400 transition-colors">
+                      {team.name}
+                    </h2>
+                    <p className="text-xs text-white/40">
+                      ID: {team.id}
+                    </p>
                   </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+                </div>
+
+
+                {/* AZIONI */}
+                <DeleteButton
+                  onConfirm={() => deleteTeamMutation.mutate(team.id)}
+                  label="Elimina squadra"
+                />
+
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

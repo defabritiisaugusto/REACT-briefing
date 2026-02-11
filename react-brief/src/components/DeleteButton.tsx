@@ -12,30 +12,41 @@
 // - mostra una conferma con window.confirm
 // - se l'utente conferma, chiama la funzione onConfirm
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 type DeleteButtonProps = {
-  // Funzione che verrà chiamata SOLO se l'utente conferma l'eliminazione
   onConfirm: () => void;
-  // Testo del bottone, di default "Elimina"
   label?: string;
 };
 
 const DeleteButton = ({ onConfirm, label = "Elimina" }: DeleteButtonProps) => {
-  const handleClick = () => {
-    const confirmed = window.confirm("Sei sicuro di voler eliminare?");
-    if (!confirmed) return;
+  const [confirming, setConfirming] = useState(false);
+
+  const handleDelete = () => {
+    if (!confirming) {
+      setConfirming(true);
+      return;
+    }
 
     onConfirm();
+    setConfirming(false);
   };
 
   return (
     <Button
-      variant="destructive"
       size="sm"
-      onClick={handleClick}
+      onClick={handleDelete}
+      className={`
+        transition-all duration-200 border backdrop-blur-md
+        ${
+          confirming
+            ? "bg-red-600 text-white border-red-600 hover:bg-red-700"
+            : "bg-red-500/20 text-red-400 border-red-500/40 hover:bg-red-500/30"
+        }
+      `}
     >
-      {label}
+      {confirming ? "Confermi?" : `❌ ${label}`}
     </Button>
   );
 };
