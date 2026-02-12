@@ -1,3 +1,15 @@
+// TournamentCreate
+// ----------------
+// Componente feature responsabile della CREAZIONE di un nuovo torneo.
+// Si occupa di:
+// - raccogliere dal form nome, data e luogo del torneo
+// - permettere la selezione fino a 8 squadre partecipanti
+// - chiamare il backend per:
+//   1) creare il torneo (tournaments)
+//   2) creare i 3 round standard (rounds: Quarti, Semifinali, Finale)
+//   3) iscrivere le squadre selezionate al torneo (tournament_team)
+// - ripulire i campi e mostrare un messaggio di successo quando tutto va a buon fine.
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TeamService } from "@/features/team/team.service";
@@ -9,6 +21,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
 
 export const TournamentCreate = () => {
+  // Stato locale per i campi del form (controllati)
   const [name, setName] = useState("");
   const [date, setDate] = useState("");
   const [place, setPlace] = useState("");
@@ -16,6 +29,13 @@ export const TournamentCreate = () => {
 
   const queryClient = useQueryClient();
 
+  // createTournamentMutation
+  // ------------------------
+  // Incapsula tutta la logica di creazione torneo lato backend:
+  // - crea il record nella tabella tournaments
+  // - crea i 3 round standard associati al torneo
+  // - crea le righe di iscrizione nella tabella tournament_team
+  // In onSuccess ripuliamo il form e invalidiamo la lista dei tornei.
   const createTournamentMutation = useMutation({
     mutationFn: async (payload: {
       name: string;
@@ -73,6 +93,8 @@ export const TournamentCreate = () => {
     },
   });
 
+  // Query che carica tutte le squadre disponibili, così l'utente può selezionarle
+  // per inserirle nel nuovo torneo.
   const {
     data: teams,
     isLoading: isTeamsLoading,
@@ -83,6 +105,10 @@ export const TournamentCreate = () => {
     queryFn: () => TeamService.list(),
   });
 
+  // toggleTeamSelection
+  // --------------------
+  // Aggiunge o rimuove una squadra dalla selezione locale,
+  // limitando il numero massimo a 8.
   const toggleTeamSelection = (teamId: number) => {
     setSelectedTeamIds((current) => {
       const isAlreadySelected = current.includes(teamId);
@@ -99,6 +125,10 @@ export const TournamentCreate = () => {
     });
   };
 
+  // handleSubmit
+  // ------------
+  // Intercetta l'invio del form, valida i dati minimi (nome non vuoto)
+  // e poi lancia la mutation di creazione torneo con tutti i dati necessari.
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 

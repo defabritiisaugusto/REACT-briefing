@@ -1,3 +1,11 @@
+// TournamentHistory
+// -----------------
+// Componente feature che mostra lo STORICO dei tornei conclusi.
+// Si occupa di:
+// - leggere solo i tornei con status "completed" dal backend
+// - leggere tutte le squadre per poter tradurre winner_team_id → nome squadra
+// - rendere una card "Hall of Fame" per ogni torneo con vincitore.
+
 import { useQuery } from "@tanstack/react-query";
 import { TournamentService } from "@/features/tournament/tournament.service";
 import type { Tournament } from "@/features/tournament/tournament.type";
@@ -5,11 +13,20 @@ import { TeamService } from "@/features/team/team.service";
 import type { Team } from "@/features/team/team.type";
 
 export const TournamentHistory = () => {
+  // Query tornei COMPLETATI.
+  // useQuery è il modo standard in React Query per leggere dati dal backend.
+  // - queryKey: ["tournaments", "completed"] identifica questa query nella cache (e.g. per invalidarla da altre parti)
+  // - queryFn: TournamentService.listByStatus("completed") esegue la richiesta HTTP per recuperare solo i tornei conclusi.
+  // la cache è un magazzino locale dove React Query salva i dati recuperati dalle query. 
+  // Ogni query ha una chiave (queryKey) che la identifica univocamente. 
+  // Quando chiamiamo invalidateQueries con quella chiave, React Query sa quali query devono essere ricaricate dal backend.
   const { data, isLoading, isError, error } = useQuery<Tournament[]>({
     queryKey: ["tournaments", "completed"],
     queryFn: () => TournamentService.listByStatus("completed"),
   });
 
+  // Query squadre: serve per poter mostrare il nome della squadra vincitrice
+  // partendo dal solo winner_team_id salvato nel torneo.
   const {
     data: teams,
     isLoading: isTeamsLoading,
@@ -45,6 +62,8 @@ export const TournamentHistory = () => {
     );
   }
 
+  // Se non ci sono tornei completati, mostriamo un messaggio di empty state.
+  // Se invece ci sono, li salviamo in completedTournaments e li mostriamo nella interfaccia.
   const completedTournaments = data ?? [];
 
   return (

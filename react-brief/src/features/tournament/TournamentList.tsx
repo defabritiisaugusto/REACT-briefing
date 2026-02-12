@@ -1,3 +1,11 @@
+// TournamentList
+// --------------
+// Componente feature che mostra tutti i tornei ATTIVI (status diverso da "completed").
+// Si occupa di:
+// - leggere la lista completa dei tornei dal backend (TournamentService.list)
+// - filtrare quelli non ancora conclusi
+// - permettere la cancellazione di un torneo tramite DeleteButton + mutation.
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { TournamentService } from "@/features/tournament/tournament.service";
@@ -7,6 +15,16 @@ import DeleteButton from "@/components/DeleteButton";
 export const TournamentList = () => {
   const queryClient = useQueryClient();
 
+  // deleteTournamentMutation
+  // ------------------------
+  // Esegue la DELETE di un torneo e, al successo, invalida la query
+  // "tournaments" così la lista viene ricaricata dal backend.
+  // useMutation è perfetto per operazioni di scrittura (POST/PUT/DELETE) perché gestisce automaticamente
+  // lo stato di loading/error/success e ci permette di definire side effect in onSuccess/onError.
+  // serve per cancellare un torneo quando l'utente conferma l'azione nel DeleteButton.
+  // mutationFn: cosa succede quando chiamiamo deleteTournamentMutation.mutate(id)
+  // onSuccess: azioni da fare in caso di successo (in questo caso, invalidare la query "tournaments" per ricaricare la lista aggiornata)
+  // la sua funzione mutate viene passata al DeleteButton, che la chiama con l'id del torneo da cancellare quando l'utente conferma.
   const deleteTournamentMutation = useMutation({
     mutationFn: (id: number) => TournamentService.delete(id),
     onSuccess: () => {
@@ -14,6 +32,7 @@ export const TournamentList = () => {
     },
   });
 
+  // Query principale che legge tutti i tornei dal backend.
   const { data, isLoading, isError, error } = useQuery<Tournament[]>({
     queryKey: ["tournaments"],
     queryFn: () => TournamentService.list(),
@@ -45,6 +64,8 @@ export const TournamentList = () => {
     );
   }
 
+  // Applichiamo un semplice filtro lato frontend per mostrare solo
+  // i tornei che NON sono ancora completati.
   const allTournaments = data ?? [];
   const tournaments = allTournaments.filter((t) => t.status !== "completed");
 

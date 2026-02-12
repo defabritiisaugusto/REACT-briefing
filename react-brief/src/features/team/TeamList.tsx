@@ -1,8 +1,12 @@
 // TeamList
 // --------
-// Componente feature che gestisce la lista completa delle squadre (read + delete + create).
-// Viene usato sia nella pagina TeamListPage (wrapper sottile) sia in altre viste
-// che vogliono mostrare/gestire le squadre.
+// Componente feature che gestisce la lista completa delle squadre (READ + DELETE + CREATE).
+// Si occupa di:
+// - leggere la lista squadre dal backend (TeamService.list)
+// - mostrare stato di caricamento/errore
+// - permettere la cancellazione di una squadra (DeleteButton + mutation)
+// - esporre il form di creazione (CreateTeamForm) in cima alla griglia.
+// È usato dalla pagina TeamListPage (wrapper sottile) e riutilizzabile altrove.
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { TeamService } from "@/features/team/team.service";
@@ -13,6 +17,10 @@ import CreateTeamForm from "@/components/CreateButton";
 const TeamList = () => {
   const queryClient = useQueryClient();
 
+  // deleteTeamMutation
+  // ------------------
+  // Gestisce la cancellazione di una squadra e, al successo,
+  // forza l'aggiornamento della query "teams".
   const deleteTeamMutation = useMutation({
     mutationFn: (id: number) => TeamService.delete(id),
     onSuccess: () => {
@@ -20,6 +28,7 @@ const TeamList = () => {
     },
   });
 
+  // Query principale che recupera tutte le squadre dal backend.
   const { data, isLoading, isError, error } = useQuery<Team[]>({
     queryKey: ["teams"],
     queryFn: () => TeamService.list(),

@@ -1,3 +1,14 @@
+// TournamentBracket
+// ------------------
+// Componente "feature" che gestisce tutto il tabellone di un singolo torneo:
+// - legge i dati del torneo, delle squadre iscritte e delle squadre totali (React Query)
+// - genera in modo casuale gli accoppiamenti dei quarti di finale (8 squadre)
+// - propaga i vincitori a semifinali e finale in base ai gol inseriti
+// - quando esiste un campione:
+//   - chiama il backend per marcare il torneo come completato (winner_team_id)
+//   - aggiorna lo stato dei round nella tabella "rounds"
+//   - salva tutte le partite (quarti, semifinali, finale) nella tabella "games".
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { TeamService } from "@/features/team/team.service";
@@ -32,10 +43,20 @@ export type TournamentBracketProps = {
   tournamentId: number;
 };
 
+/**
+ * TournamentBracket
+ * -----------------
+ * Riceve in ingresso l'id di un torneo e costruisce tutta l'esperienza di tabellone:
+ * - usa 3 query per ottenere torneo, iscrizioni (tournament_teams) e squadre
+ * - usa stato locale per punteggi di quarti / semifinali / finale
+ * - quando i punteggi sono completi, calcola dinamicamente i vincitori e il campione
+ * - sincronizza questi risultati con il database tramite i vari service (RoundService, GameService, TournamentService).
+ */
 export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
   const queryClient = useQueryClient();
 
   // 1) Carichiamo la lista dei tornei per trovare il torneo con l'ID giusto.
+  // Questo ci serve anche per avere a disposizione tutte le informazioni del torneo (nome, data, luogo, winner_team_id).
   const {
     data: tournaments,
     isLoading: isTournamentsLoading,
@@ -46,6 +67,7 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
   });
 
   // 2) Carichiamo le squadre iscritte a questo torneo
+  // Questo ci serve per sapere quali squadre partecipano e poter generare gli accoppiamenti.
   const {
     data: tournamentTeams,
     isLoading: isTournamentTeamsLoading,
@@ -57,6 +79,7 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
   });
 
   // 3) Carichiamo tutte le squadre per poter trasformare idTeam → nome squadra
+  // Questo ci serve per mostrare i nomi delle squadre nel tabellone, partendo dai soli idTeam salvati in tournamentTeams.
   const {
     data: teams,
     isLoading: isTeamsLoading,
@@ -66,7 +89,11 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
     queryFn: () => TeamService.list(),
   });
 
+  // che cos'è useMutation?
+  // useMutation è un hook di React Query che ci permette di gestire operazioni di scrittura (POST/PUT/DELETE) verso il backend.
   // Mutation che invia al backend il vincitore finale del torneo.
+  // Quando va a buon fine, invalidiamo sia la lista generale dei tornei
+  // sia quella filtrata per "completed" (storico tornei).
   const completeTournamentMutation = useMutation({
     mutationFn: (winnerTeamId: number) =>
       TournamentService.completeTournament(tournamentId, winnerTeamId),
@@ -77,6 +104,9 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
   });
 
   // Funzione di utilità per aggiornare lo stato dei round nel DB
+  // ------------------------------------------------------------
+  // Viene chiamata quando decretiamo il campione: prende tutti i round
+  // associati a questo torneo e li marca come "completed" nella tabella "rounds".
   const markRoundsCompleted = async () => {
     try {
       const allRounds = await RoundService.list();
@@ -95,8 +125,14 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
     }
   };
 
+  // updateFinalGame
+  // ---------------
   // Quando abbiamo il vincitore della finale, aggiorniamo anche il game di finale
-  // nella tabella "games" con i gol e il winner_team_id.
+  // nella tabella "games" con:
+  // - id del round "Finale"
+  // - id delle due squadre finaliste
+  // - gol segnati
+  // - winner_team_id
   const updateFinalGame = async (winnerTeamId: number, score: Score) => {
     try {
       const allRounds = await RoundService.list();
@@ -104,21 +140,25 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
         (round) => round.idTournament === tournamentId && round.name === "Finale"
       );
 
+      // Se non troviamo il round di finale, non possiamo procedere con l'aggiornamento del game.
       if (!finalRound) {
         console.warn("Round 'Finale' non trovato per il torneo", tournamentId);
         return;
       }
 
+      // Troviamo gli id delle squadre finaliste a partire dai loro nomi.
       const finalTeam1Id =
         teams?.find((team) => team.name === finalTeam1Name)?.id ?? null;
       const finalTeam2Id =
         teams?.find((team) => team.name === finalTeam2Name)?.id ?? null;
 
+        // Se non riusciamo a determinare gli id delle squadre finaliste, non possiamo procedere con l'aggiornamento del game.
       if (!finalTeam1Id || !finalTeam2Id) {
         console.warn("Impossibile determinare gli ID delle squadre di finale");
         return;
       }
 
+      // Controlliamo se esiste già un game di finale per questo round e queste squadre.
       const allGames = await GameService.list();
       let finalGame = allGames.find(
         (game) =>
@@ -129,6 +169,8 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
       );
 
       if (!finalGame) {
+
+        // Se non esiste un game di finale, lo creiamo.
         finalGame = await GameService.create({
           data: {
             idRound: finalRound.id,
@@ -141,6 +183,7 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
         });
       }
 
+      // Se il game di finale esiste già, lo aggiorniamo con i nuovi dati.
       await GameService.update({
         id: finalGame.id,
         data: {
@@ -155,6 +198,8 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
   };
 
   // Da TournamentTeam e Team ricaviamo un semplice array di nomi squadra.
+  // Questo ci consente poi di lavorare solo con i nomi nel tabellone,
+  // e riconvertirli in id quando dobbiamo scrivere su DB.
   const teamNames: string[] = [];
   if (tournamentTeams && teams) {
     for (const tournamentTeam of tournamentTeams) {
@@ -168,18 +213,24 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
   }
 
   // Le 8 squadre che parteciperanno al tabellone, già mescolate in modo casuale.
+  // quarterTeams contiene quindi solo i nomi delle squadre usate nel bracket.
   const [quarterTeams, setQuarterTeams] = useState<string[]>([]);
 
+  // useEffect che genera in modo casuale gli accoppiamenti dei quarti di finale.
+  // Viene eseguito una sola volta quando abbiamo i nomi delle squadre (teamNames) e quarterTeams è ancora vuoto.
   useEffect(() => {
     if (quarterTeams.length > 0) return;
     if (teamNames.length < 8) return;
 
+
+    // Mescoliamo in modo casuale le squadre e prendiamo le prime 8 per il tabellone.
     const shuffled = [...teamNames].sort(() => Math.random() - 0.5);
     const selected = shuffled.slice(0, 8);
     setQuarterTeams(selected);
   }, [teamNames, quarterTeams.length]);
 
   // Gol dei quarti (4 partite)
+  // Ogni elemento dell'array corrisponde a una partita dei quarti.
   const [quarterScores, setQuarterScores] = useState<Score[]>(() =>
     Array.from({ length: 4 }, () => ({ goals1: null, goals2: null }))
   );
@@ -196,6 +247,7 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
   });
   const [hasMarkedCompleted, setHasMarkedCompleted] = useState(false);
 
+  // Stato globale di caricamento/errore delle 3 query principali.
   const isLoading =
     isTournamentsLoading || isTournamentTeamsLoading || isTeamsLoading;
   const isError = isTournamentsError || isTournamentTeamsError || isTeamsError;
@@ -224,6 +276,7 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
     );
   }
 
+  // Cerchiamo il torneo di interesse sulla base dell'id passato come prop.
   const tournament = tournaments?.find((t) => t.id === tournamentId);
 
   if (!tournament) {
@@ -272,6 +325,11 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
     );
   }
 
+  // quarterPairs definisce gli accoppiamenti delle 8 squadre nei quarti:
+  // - match 1: squadre 0 e 1
+  // - match 2: squadre 2 e 3
+  // - match 3: squadre 4 e 5
+  // - match 4: squadre 6 e 7
   const quarterPairs: [number, number][] = [
     [0, 1],
     [2, 3],
@@ -279,6 +337,12 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
     [6, 7],
   ];
 
+  // quarterMatches
+  // --------------
+  // Costruiamo l'elenco delle 4 partite dei quarti con:
+  // - nomi delle squadre
+  // - punteggio corrente
+  // - winnerName calcolato dinamicamente da getWinnerName.
   const quarterMatches = quarterPairs.map(([i1, i2], index) => {
     const team1Name = quarterTeams[i1];
     const team2Name = quarterTeams[i2];
@@ -291,6 +355,11 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
     };
   });
 
+  // semiMatches
+  // -----------
+  // Le semifinali prendono come input i vincitori dei quarti:
+  // - semi 1: vincente match 1 vs vincente match 2
+  // - semi 2: vincente match 3 vs vincente match 4
   const semiMatches = [0, 1].map((index) => {
     const qIndex1 = index === 0 ? 0 : 2;
     const qIndex2 = index === 0 ? 1 : 3;
@@ -306,10 +375,16 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
     };
   });
 
+  // I due finalisti sono i vincitori delle due semifinali.
   const finalTeam1Name = semiMatches[0].winnerName;
   const finalTeam2Name = semiMatches[1].winnerName;
   const championName = getWinnerName(finalTeam1Name, finalTeam2Name, finalScore);
 
+  // saveQuarterAndSemiGames
+  // -----------------------
+  // Quando decretiamo il campione salviamo anche tutte le partite di quarti e semifinale
+  // nella tabella "games". Per evitare duplicati, controlliamo prima se esistono già
+  // game associati ai round di quarti o semifinali.
   const saveQuarterAndSemiGames = async () => {
     try {
       const allRounds = await RoundService.list();
@@ -342,12 +417,14 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
         return;
       }
 
+      // Funzione helper per convertire il nome squadra in id letti da TeamService.list.
       const findTeamIdByName = (name: string): number | null => {
         if (!teams) return null;
         const found = teams.find((team) => team.name === name);
         return found ? found.id : null;
       };
 
+      // Creazione partite dei QUARTI di finale
       for (const match of quarterMatches) {
         const { team1Name, team2Name, score } = match;
         const { goals1, goals2 } = score;
@@ -380,6 +457,7 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
         });
       }
 
+      // Creazione partite delle SEMIFINALI
       for (const match of semiMatches) {
         const { team1Name, team2Name, score } = match;
         const { goals1, goals2 } = score;
@@ -419,6 +497,9 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
     }
   };
 
+  // handleQuarterScoreChange
+  // -------------------------
+  // Aggiorna in stato locale il punteggio di una specifica partita dei quarti.
   const handleQuarterScoreChange = (
     matchIndex: number,
     field: keyof Score,
@@ -434,6 +515,9 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
     });
   };
 
+  // handleSemiScoreChange
+  // ----------------------
+  // Aggiorna in stato locale il punteggio di una specifica semifinale.
   const handleSemiScoreChange = (
     matchIndex: number,
     field: keyof Score,
@@ -449,6 +533,13 @@ export const TournamentBracket = ({ tournamentId }: TournamentBracketProps) => {
     });
   };
 
+  // handleFinalScoreChange
+  // ----------------------
+  // Aggiorna in stato locale il punteggio della finale.
+  // Quando i dati permettono di determinare un campione, scatena la pipeline di:
+  // - completamento torneo
+  // - aggiornamento round
+  // - salvataggio finale + quarti + semifinali
   const handleFinalScoreChange = (field: keyof Score, value: string) => {
     const parsed = value === "" ? null : Number(value);
     if (parsed !== null && (Number.isNaN(parsed) || parsed < 0)) return;
